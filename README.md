@@ -56,8 +56,13 @@ yarn create @shopify/app
 Using npm:
 
 ```shell
+(in discount-app folder)
 npm init @shopify/app@latest
+npm run dev
 
+(in front-end folder)
+npm i @shopify/react-form
+npm i @shopify/react-i18n
 ```
 
 Using pnpm:

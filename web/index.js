@@ -8,6 +8,31 @@ import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import GDPRWebhookHandlers from "./gdpr.js";
 
+const CREATE_CODE_MUTATION = `
+  mutation CreateCodeDiscount($discount: DiscountCodeAppInput!) {
+    discountCreate: discountCodeAppCreate(codeAppDiscount: $discount) {
+      userErrors {
+        code
+        message
+        field
+      }
+    }
+  }
+`
+const CREATE_AUTOMATIC_MUTATION = `
+  mutation CreateAutomaticDiscount($discount: DiscountAutomaticAppInput!) {
+    discountCreate: discountAutomaticAppCreate(
+      automaticAppDiscount: $discount
+      ) {
+      userErrors {
+        code
+        message
+        field
+      }
+    }
+  }
+`
+
 const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
   10
@@ -38,6 +63,28 @@ app.post(
 app.use("/api/*", shopify.validateAuthenticatedSession());
 
 app.use(express.json());
+
+const rundDiscountMutation = async (req, res, mutation) => {
+  const session = res.locals.shopify.session
+
+  const client = new shopify.api.clients.Graphql(session)
+
+  const data = await client.query({
+    data: {
+      query: mutation,
+      variables: req.body,
+    },
+  })
+  res.send(data.body)
+}
+
+app.post("/api/discounts/code", async (req, res) => {
+  await rundDiscountMutation(req, res, CREATE_CODE_MUTATION)
+})
+
+app.post("api/discount/automatic", async (req, res) => {
+  await rundDiscountMutation(req, res, CREATE_AUTOMATIC_MUTATION)
+})
 
 app.get("/api/products/count", async (_req, res) => {
   const countData = await shopify.api.rest.Product.count({
